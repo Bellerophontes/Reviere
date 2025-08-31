@@ -24,20 +24,72 @@ if (isPostRequest() && isset($_POST['export_type']) && isset($_POST['data_type']
     // Exportiere Daten basierend auf Typ
     switch ($dataType) {
         case 'reviere':
-            $data = loadReviere();
-            $filename = 'reviere_export_' . date('Y-m-d') . '.' . $exportType;
+            $rawData = loadReviere();
+            // Nur die wichtigen Felder auswählen
+            $data = [];
+            foreach ($rawData as $item) {
+                $data[] = [
+                    'id' => $item['id'],
+                    'name' => $item['name'],
+                    'gemeinde' => $item['gemeinde'],
+                    'wildraum' => $item['wildraum'],
+                    'karten_url' => $item['karten_url']
+                ];
+            }
+            $filename = 'reviere_export_' . date('Y-m-d');
             break;
         case 'tiere':
-            $data = loadTiere();
-            $filename = 'tiere_export_' . date('Y-m-d') . '.' . $exportType;
+            $rawData = loadTiere();
+            // Nur die wichtigen Felder auswählen
+            $data = [];
+            foreach ($rawData as $item) {
+                $data[] = [
+                    'id' => $item['id'],
+                    'revier' => $item['revier'],
+                    'art' => $item['art'],
+                    'geschlecht' => $item['geschlecht'],
+                    'alter' => $item['alter'],
+                    'besonderheiten' => $item['besonderheiten']
+                ];
+            }
+            $filename = 'tiere_export_' . date('Y-m-d');
             break;
         case 'sichtungen':
-            $data = loadSichtungen();
-            $filename = 'sichtungen_export_' . date('Y-m-d') . '.' . $exportType;
+            $rawData = loadSichtungen();
+            // Nur die wichtigen Felder auswählen
+            $data = [];
+            foreach ($rawData as $item) {
+                $data[] = [
+                    'id' => $item['id'],
+                    'revier' => $item['revier'],
+                    'tier' => $item['tier'],
+                    'datum' => $item['datum'],
+                    'zeit' => $item['zeit'],
+                    'foto_url' => $item['foto_url'],
+                    'besonderheiten' => $item['besonderheiten']
+                ];
+            }
+            $filename = 'sichtungen_export_' . date('Y-m-d');
             break;
         case 'abschuesse':
-            $data = loadAbschuesse();
-            $filename = 'abschuesse_export_' . date('Y-m-d') . '.' . $exportType;
+            $rawData = loadAbschuesse();
+            // Nur die wichtigen Felder auswählen
+            $data = [];
+            foreach ($rawData as $item) {
+                $data[] = [
+                    'id' => $item['id'],
+                    'revier' => $item['revier'],
+                    'tier' => $item['tier'],
+                    'datum' => $item['datum'],
+                    'zeit' => $item['zeit'],
+                    'foto_url' => $item['foto_url'],
+                    'schussdistanz' => $item['schussdistanz'],
+                    'treffpunktlage' => $item['treffpunktlage'],
+                    'fluchtstrecke' => $item['fluchtstrecke'],
+                    'besonderheiten' => $item['besonderheiten']
+                ];
+            }
+            $filename = 'abschuesse_export_' . date('Y-m-d');
             break;
         default:
             $_SESSION['error_message'] = 'Ungültiger Datentyp';
@@ -45,7 +97,7 @@ if (isPostRequest() && isset($_POST['export_type']) && isset($_POST['data_type']
     }
     
     // Setze entsprechende Header für Download
-    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Content-Disposition: attachment; filename="' . $filename . '.' . $exportType . '"');
     
     if ($exportType === 'csv') {
         header('Content-Type: text/csv; charset=UTF-8');

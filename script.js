@@ -19,12 +19,13 @@ function initializeEventListeners() {
         revierSelect.addEventListener('change', function() {
             const revierId = this.value;
             if (revierId) {
-                showTierForm(true);
-                showSichtungsDetails(true);
+                // Erst alle Formen ausblenden
+                hideAllTierForms();
+                // Dann Tierauswahl anzeigen
+                document.getElementById('tierauswahl').style.display = 'block';
                 loadTiereForRevier(revierId, 'lebend');
             } else {
-                showTierForm(false);
-                showSichtungsDetails(false);
+                document.getElementById('tierauswahl').style.display = 'none';
                 hideAllTierForms();
             }
         });
@@ -36,16 +37,21 @@ function initializeEventListeners() {
         revierAbschussSelect.addEventListener('change', function() {
             const revierId = this.value;
             if (revierId) {
-                showTierFormAbschuss(true);
-                showAbschussDetails(true);
+                // Erst alle Formen ausblenden
+                hideAllTierForms();
+                // Dann Tierauswahl anzeigen
+                document.getElementById('tierauswahl').style.display = 'block';
                 loadTiereForRevier(revierId, 'abschuss');
             } else {
-                showTierFormAbschuss(false);
-                showAbschussDetails(false);
+                document.getElementById('tierauswahl').style.display = 'none';
                 hideAllTierForms();
             }
         });
     }
+
+    // Rest des Codes bleibt unverändert
+    // ...
+}
 
 // Bestehende Tier-Auswahl für Sichtungen
     const bestehendestierSelect = document.getElementById('bestehendestier');
@@ -287,10 +293,11 @@ let currentTierData = null;
  * @param {string} type Typ der Tiere ('lebend' oder 'abschuss')
  */
 function loadTiereForRevier(revierId, type = 'lebend') {
-    // Zeige Ladeindikator
-    const tiereContainer = document.getElementById(type === 'lebend' ? 'bestehende-tiere' : 'bestehende-tiere');
+    // Zeige Ladeindikator im Tierauswahl-Container
+    const tiereContainer = document.getElementById('bestehende-tiere');
     if (tiereContainer) {
         tiereContainer.innerHTML = '<p>Lade Tiere...</p>';
+        tiereContainer.style.display = 'block';
     }
     
     fetch('managetiere.php?revier=' + encodeURIComponent(revierId) + '&type=' + encodeURIComponent(type))
@@ -316,12 +323,12 @@ function loadTiereForRevier(revierId, type = 'lebend') {
                     select.appendChild(option);
                 });
                 
-                const tiereContainer = document.getElementById(type === 'lebend' ? 'bestehende-tiere' : 'bestehende-tiere');
+                const tiereContainer = document.getElementById('bestehende-tiere');
                 if (tiereContainer) {
                     tiereContainer.style.display = 'block';
                 }
             } else {
-                const tiereContainer = document.getElementById(type === 'lebend' ? 'bestehende-tiere' : 'bestehende-tiere');
+                const tiereContainer = document.getElementById('bestehende-tiere');
                 if (tiereContainer) {
                     tiereContainer.innerHTML = '<p>Keine Tiere für dieses Revier gefunden.</p>';
                     tiereContainer.style.display = 'block';
@@ -331,7 +338,7 @@ function loadTiereForRevier(revierId, type = 'lebend') {
         .catch(error => {
             console.error('Fehler beim Laden der Tiere:', error);
             
-            const tiereContainer = document.getElementById(type === 'lebend' ? 'bestehende-tiere' : 'bestehende-tiere');
+            const tiereContainer = document.getElementById('bestehende-tiere');
             if (tiereContainer) {
                 tiereContainer.innerHTML = '<p>Fehler beim Laden der Tiere. Bitte versuchen Sie es erneut.</p>';
                 tiereContainer.style.display = 'block';
