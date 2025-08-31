@@ -1,0 +1,3 @@
+R-001,Revier Doboj,Doboj,7,https://umap.openstreetmap.fr/de/map/unbenannte-karte_1271995?feature=Revier%20Doboj#17/44.74668/17.19570
+R-002,Revier Omada,Omada,3,https://umap.openstreetmap.fr/de/map/unbenannte-karte_1271995?feature=Revier%20Ovada#11/44.6098/8.7822
+R-003,Revier Ballasalla,Ballasalla,12,https://umap.openstreetmap.fr/de/map/unbenannte-karte_1271995?feature=Ballasalla#13/54.0904/-4.6577
