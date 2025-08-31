@@ -1,61 +1,71 @@
 <?php
-$reviereFile = __DIR__ . '/reviere.txt';
+define('SECURE_ACCESS', true);
+require_once 'functions.php';
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $name = $_POST['name'];
-    $gemeinde = $_POST['gemeinde'];
-    $wildraum = $_POST['wildraum'];
-    $karten_url = $_POST['karten_url'] ?? '';
-    
-    // Generiere eine neue ID
-    $lastId = 0;
-    
-    if (file_exists($reviereFile)) {
-        $content = file_get_contents($reviereFile);
-        
-        // Repariere das Format falls nötig (alle Einträge in separate Zeilen)
-        $repairedContent = preg_replace('/(?<!^)(R-\d{3})/', "\n$1", $content);
-        $repairedContent = trim($repairedContent);
-        
-        // Schreibe die reparierte Datei zurück
-        if ($repairedContent !== $content) {
-            file_put_contents($reviereFile, $repairedContent . "\n");
-        }
-        
-        // Lade die reparierten Zeilen
-        $lines = explode("\n", $repairedContent);
-        $lines = array_filter($lines); // Entferne leere Zeilen
-        
-        foreach ($lines as $line) {
-            if (preg_match('/^R-(\d+)/', trim($line), $matches)) {
-                $idNum = (int) $matches[1];
-                if ($idNum > $lastId) {
-                    $lastId = $idNum;
-                }
-            }
-        }
-    }
-    
-    $newId = 'R-' . str_pad($lastId + 1, 3, '0', STR_PAD_LEFT);
-    
-    // Speichere das neue Revier im CSV-Format (mit Karten-URL)
-    $newEntry = $newId . ',' . $name . ',' . $gemeinde . ',' . $wildraum . ',' . $karten_url;
-    
-    // Stelle sicher, dass die Datei mit einem Zeilenendezeichen endet
-    $currentContent = '';
-    if (file_exists($reviereFile)) {
-        $currentContent = file_get_contents($reviereFile);
-        // Füge Zeilenumbruch hinzu falls die Datei nicht leer ist und nicht mit Zeilenumbruch endet
-        if (!empty($currentContent) && !preg_match('/[\r\n]$/', $currentContent)) {
-            $currentContent .= "\n";
-            file_put_contents($reviereFile, $currentContent);
-        }
-    }
-    
-    // Füge den neuen Eintrag hinzu
-    file_put_contents($reviereFile, $newEntry . "\n", FILE_APPEND | LOCK_EX);
-    
-    header('Location: reviere.php');
-    exit;
+// Starte die Session für CSRF-Schutz
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
-?>
+
+// Nur POST-Anfragen erlauben
+if (!isPostRequest()) {
+    $_SESSION['error_message'] = 'Nur POST-Anfragen sind erlaubt.';
+    redirect('reviere.php');
+}
+
+// CSRF-Schutz
+if (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
+    $_SESSION['error_message'] = 'Ungültiges oder fehlendes CSRF-Token.';
+    redirect('reviere.php');
+}
+
+// Eingabevalidierung
+$name = trim($_POST['name'] ?? '');
+$gemeinde = trim($_POST['gemeinde'] ?? '');
+$wildraum = trim($_POST['wildraum'] ?? '');
+$karten_url = trim($_POST['karten_url'] ?? '');
+
+// Validiere Pflichtfelder
+if (empty($name) || empty($gemeinde) || empty($wildraum)) {
+    $_SESSION['error_message'] = 'Bitte füllen Sie alle Pflichtfelder aus.';
+    redirect('reviere.php');
+}
+
+// Validiere Wildraum
+if (!is_numeric($wildraum) || $wildraum < 1 || $wildraum > 17) {
+    $_SESSION['error_message'] = 'Der Wildraum muss zwischen 1 und 17 liegen.';
+    redirect('reviere.php');
+}
+
+// Validiere Karten-URL (falls vorhanden)
+if (!empty($karten_url) && !validateUrl($karten_url)) {
+    $_SESSION['error_message'] = 'Bitte geben Sie eine gültige URL für die Karte ein.';
+    redirect('reviere.php');
+}
+
+// Generiere eine neue ID
+$newId = generateId('R-', REVIERE_FILE);
+
+// Bereinige Eingaben für CSV-Format
+$name = str_replace(',', ';', $name);
+$gemeinde = str_replace(',', ';', $gemeinde);
+
+// Speichere das neue Revier im CSV-Format
+$newEntry = $newId . ',' . $name . ',' . $gemeinde . ',' . $wildraum . ',' . $karten_url;
+
+// Stelle sicher, dass die Datei mit einem Zeilenendezeichen endet
+if (file_exists(REVIERE_FILE)) {
+    $currentContent = file_get_contents(REVIERE_FILE);
+    if (!empty($currentContent) && !preg_match('/[\r\n]$/', $currentContent)) {
+        file_put_contents(REVIERE_FILE, $currentContent . PHP_EOL);
+    }
+}
+
+// Füge den neuen Eintrag hinzu
+if (file_put_contents(REVIERE_FILE, $newEntry . PHP_EOL, FILE_APPEND | LOCK_EX)) {
+    $_SESSION['success_message'] = 'Revier wurde erfolgreich gespeichert.';
+} else {
+    $_SESSION['error_message'] = 'Fehler beim Speichern des Reviers.';
+}
+
+redirect('reviere.php');

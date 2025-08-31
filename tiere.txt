@@ -3,3 +3,7 @@ T-002,R-001,Rotfuchs,männlich,> 2 Jahre,Narben am Ohr
 T-003,R-002,Schwarzwild,weiblich,Jungtier,auffällig dunkel
 T-004,R-003,Dachs,unbekannt,1-2 jährig,kein besonderer Befund
 T-005,R-002,Rotwild,männlich,Jungtier,Kleinwuchs
+T-006,R-001,Rehwild,weiblich,unbekannt,
+T-007,R-001,Rotfuchs,unbekannt,unbekannt, 
+T-008,R-003,Rehwild,unbekannt,unbekannt,
+T-009,R-003,Rehwild,unbekannt,unbekannt,

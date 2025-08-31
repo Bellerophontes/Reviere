@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /backups/
+Disallow: /*.php$
+Disallow: /*.txt$
+Allow: /index.html
+Allow: /styles.css
+Allow: /script.js
