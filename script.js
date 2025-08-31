@@ -47,13 +47,15 @@ function initializeEventListeners() {
         });
     }
 
-    // Bestehende Tier-Auswahl für Sichtungen
+// Bestehende Tier-Auswahl für Sichtungen
     const bestehendestierSelect = document.getElementById('bestehendestier');
     if (bestehendestierSelect) {
         bestehendestierSelect.addEventListener('change', function() {
             handleTierSelection(this);
         });
-		// Bestehende Tier-Auswahl für Abschüsse
+    }
+    
+    // Bestehende Tier-Auswahl für Abschüsse
     const bestehendestierAbschussSelect = document.getElementById('bestehendestier');
     if (bestehendestierAbschussSelect) {
         bestehendestierAbschussSelect.addEventListener('change', function() {

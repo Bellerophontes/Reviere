@@ -22,8 +22,6 @@ include 'header.php';
     <label for="karten_url">Karten-URL (optional)</label>
     <input type="url" id="karten_url" name="karten_url" placeholder="https://maps.google.com/...">
     <small>Link zu einer Karte des Reviers (z.B. Google Maps, OpenStreetMap)</small>
-
-    <button type="submit">
 	<button type="submit">Revier speichern</button>
 </form>
 

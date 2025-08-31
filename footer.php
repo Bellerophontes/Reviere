@@ -2,7 +2,7 @@
 
     <footer>
         <div class="container">
-            <p>&copy; <?= date('Y') ?> Wildtiermanagement System | Version 1.0.0</p>
+            <p>&copy; <?= date('Y') ?> Wildtiermanagement System | Version 1.1.0</p>
         </div>
     </footer>
 

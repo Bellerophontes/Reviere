@@ -468,3 +468,175 @@ function redirect($url) {
     header('Location: ' . $url);
     exit();
 }
+
+/**
+ * Erstellt ein Backup der Datendateien
+ * 
+ * @param string $backupDir Verzeichnis für das Backup
+ * @return array Status des Backups und Nachricht
+ */
+function createBackup($backupDir) {
+    // Dateien, die gesichert werden sollen
+    $files = [
+        REVIERE_FILE,
+        TIERE_FILE,
+        SICHTUNGEN_FILE,
+        ABSCHUESSE_FILE
+    ];
+    
+    // Erstelle Backup-Verzeichnis falls es nicht existiert
+    if (!is_dir($backupDir)) {
+        if (!mkdir($backupDir, 0755, true)) {
+            return [
+                'success' => false,
+                'message' => 'Backup-Verzeichnis konnte nicht erstellt werden.'
+            ];
+        }
+    }
+    
+    // Erstelle .htaccess um den Zugriff auf das Backup-Verzeichnis zu verhindern
+    $htaccessFile = $backupDir . '/.htaccess';
+    if (!file_exists($htaccessFile)) {
+        file_put_contents($htaccessFile, "Order deny,allow\nDeny from all");
+    }
+    
+    // Erstelle Backup-Datei
+    $timestamp = date('Y-m-d_H-i-s');
+    $backupFilename = $backupDir . '/backup_' . $timestamp . '.zip';
+    
+    $zip = new ZipArchive();
+    if ($zip->open($backupFilename, ZipArchive::CREATE) !== true) {
+        return [
+            'success' => false,
+            'message' => 'Backup-Datei konnte nicht erstellt werden.'
+        ];
+    }
+    
+    // Füge Dateien zum Backup hinzu
+    $backupSuccess = true;
+    foreach ($files as $file) {
+        if (file_exists($file)) {
+            if (!$zip->addFile($file, basename($file))) {
+                $backupSuccess = false;
+                break;
+            }
+        }
+    }
+    
+    $zip->close();
+    
+    if ($backupSuccess) {
+        return [
+            'success' => true,
+            'message' => 'Backup wurde erfolgreich erstellt: ' . basename($backupFilename),
+            'filename' => basename($backupFilename)
+        ];
+    } else {
+        // Lösche fehlerhafte Backup-Datei
+        if (file_exists($backupFilename)) {
+            unlink($backupFilename);
+        }
+        
+        return [
+            'success' => false,
+            'message' => 'Es gab Probleme beim Erstellen des Backups.'
+        ];
+    }
+}
+
+/**
+ * Exportiert Daten im angegebenen Format
+ * 
+ * @param array $data Die zu exportierenden Daten
+ * @param string $format Das Format (csv oder json)
+ * @param string $filename Der Dateiname
+ */
+function exportData($data, $format, $filename) {
+    if ($format === 'csv') {
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '.csv"');
+        
+        // Ausgabe direkt in den Output-Buffer
+        $output = fopen('php://output', 'w');
+        
+        // BOM für Excel-Kompatibilität
+        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
+        
+        // Schreibe CSV-Header
+        if (!empty($data)) {
+            $firstItem = reset($data);
+            fputcsv($output, array_keys($firstItem));
+            
+            // Schreibe Daten
+            foreach ($data as $row) {
+                fputcsv($output, $row);
+            }
+        }
+        
+        fclose($output);
+        exit;
+    } elseif ($format === 'json') {
+        header('Content-Type: application/json; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '.json"');
+        
+        echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+}
+
+/**
+ * Formatiert Dateigröße in lesbare Form
+ * 
+ * @param int $bytes Dateigröße in Bytes
+ * @return string Formatierte Dateigröße
+ */
+function formatFileSize($bytes) {
+    $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    
+    $bytes = max($bytes, 0);
+    $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+    $pow = min($pow, count($units) - 1);
+    
+    $bytes /= pow(1024, $pow);
+    
+    return round($bytes, 2) . ' ' . $units[$pow];
+}
+
+/**
+ * Protokolliert eine Aktion im System
+ * 
+ * @param string $action Die durchgeführte Aktion
+ * @param string $details Details zur Aktion
+ * @param string $status Status der Aktion (success, error, warning, info)
+ */
+function logAction($action, $details = '', $status = 'info') {
+    $logFile = __DIR__ . '/logs/system.log';
+    $logDir = dirname($logFile);
+    
+    // Erstelle Log-Verzeichnis falls es nicht existiert
+    if (!is_dir($logDir)) {
+        if (!mkdir($logDir, 0755, true)) {
+            return false;
+        }
+        
+        // Erstelle .htaccess um den Zugriff auf das Log-Verzeichnis zu verhindern
+        $htaccessFile = $logDir . '/.htaccess';
+        file_put_contents($htaccessFile, "Order deny,allow\nDeny from all");
+    }
+    
+    $timestamp = date('Y-m-d H:i:s');
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
+    
+    $logEntry = sprintf(
+        "[%s] [%s] [%s] %s | %s | %s\n",
+        $timestamp,
+        $status,
+        $ip,
+        $action,
+        $details,
+        $userAgent
+    );
+    
+    return file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX) !== false;
+}
